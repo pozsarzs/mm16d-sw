@@ -1,0 +1,82 @@
+Operating program for MM16D device
+----------------------------------
+
+1. About software
+~~~~~~~~~~~~~~~~~
+
+  It is a stand-alone grow house control device. It takes the environmental
+data from the MM17D connected to it via the serial port. It uploads the
+received data and the status data of the device to a remote database, and
+also retrieves the settings affecting its operation from there. If this
+database is not available, it works with the last or a general setting (if it
+is after switching on), then the logging is paused.
+  It has a web interface. All data can be queried via WLAN using HTTP in four
+formats (CSV, JSON, TXT and XML) and using Modbus/TCP.
+ 
+Requirements:
+  Hardware: ESP8266 Huzzah Feather microcontroller
+  Software: - Modbus-ESP8266 library v4.1.0 by Andre Sarmento Barbosa,
+              Alexander Emelianov
+            - ESP8266WebServer library v1.0 by Ivan Grokhotkov
+            - ESP8266WiFi library v1.0 by Ivan Grokhotkov
+
+2. Information and data access
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Information pages:
+  http://../          Help page                                  text/html
+  http://../summary   Summary page                               text/html
+  http://../log       Log page                                   text/html
+
+Data access with HTTP:
+  http://../get/csv   Get all values in CSV format               text/plain
+  http://../get/json  Get all values in JSON format              text/plain
+  http://../get/txt   Get all values in TXT format               text/plain
+  http://../get/xml   Get all values in XML format               text/plain
+
+Data access with Modbus:
+  10001               Sign lights              (0/1: red/green)  bit
+  10002               Alarm                 (0/1: normal/alarm)  bit
+  10003               Overcurrent breaker  (0/1: closed/opened)  bit
+  10004               No connection to the NTP server            bit
+  10005               No connection to the database server       bit
+  10006               No connection to the MM17D                 bit
+  10007               Stand-by operation mode                    bit
+  10008               Growing hyphae operation mode              bit
+  10009               Growing mushroom operation mode            bit
+  10010               Manual switch               (0/1: off/on)  bit
+  10011               Enable lamps        (0/1: disable/enable)  bit
+  10012               Enable ventilators  (0/1: disable/enable)  bit
+  10013               Enable heater       (0/1: disable/enable)  bit
+  10014               Lamp output                 (0/1: off/on)  bit
+  10015               Ventilator output           (0/1: off/on)  bit
+  10016               Heater output               (0/1: off/on)  bit
+  10017               MM17D green LED             (0/1: off/on)  bit
+  10018               MM17D yellow LED            (0/1: off/on)  bit
+  10019               MM17D red LED               (0/1: off/on)  bit
+  30001               MM17D int. humidity in percent             integer
+  30002               MM17D int. temperature in degree Celsius   integer
+  30003               MM17D ext. temperature in degree Celsius   integer
+  39999               Software version                           two byte
+
+3. How to get installer package?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+a. Visit homepage (see later) to download package:
+
+  architecture  operation system        filename
+  --------------------------------------------------------
+  (all)         (source code)           mm16d-sw-0.1.tar.gz
+
+b. Download from Github
+
+  $ git clone https://github.com/pozsarzs/mm16d-sw.git
+
+4. Contact
+~~~~~~~~~~
+   Homepage:             <http://www.pozsarzs.hu>
+   Author:               Pozsar Zsolt
+   E-mail:               <pozsarzs@gmail.com>
+   Phone:                +36 56/470-272
+   Mobile:               +36 30/249-5030
+
+--------------------------------------------------------------------------------
+ MM16D * Copyright (C) 2023 Pozsar Zsolt <pozsarzs@gmail.com>
