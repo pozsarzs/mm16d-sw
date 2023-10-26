@@ -24,3 +24,4 @@ ESP8266 Huzzah Feather microcontroller
  - [Modbus-ESP8266](https://github.com/emelianov/modbus-esp8266) library v4.1.0 by Andre Sarmento Barbosa, Alexander Emelianov
  - [ESP8266WebServer](https://github.com/esp8266/Arduino) library v1.0 by Ivan Grokhotkov
  - [ESP8266WiFi](https://github.com/esp8266/Arduino) library v1.0 by Ivan Grokhotkov
+ - [NTPClient](https://github.com/arduino-libraries/NTPClient) library v3.2.1 by Fabrice Weinberg

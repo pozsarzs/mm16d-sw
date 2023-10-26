@@ -50,9 +50,13 @@ Data access with Modbus:
   10014               Lamp output                 (0/1: off/on)  bit
   10015               Ventilator output           (0/1: off/on)  bit
   10016               Heater output               (0/1: off/on)  bit
-  10017               MM17D green LED             (0/1: off/on)  bit
-  10018               MM17D yellow LED            (0/1: off/on)  bit
-  10019               MM17D red LED               (0/1: off/on)  bit
+  10017               Internal humidity is less than requied     bit
+  10018               Internal humidity is more than requied     bit
+  10019               Internal temperature is less than requied  bit
+  10020               Internal temperature is more than requied  bit
+  10021               MM17D green LED             (0/1: off/on)  bit
+  10022               MM17D yellow LED            (0/1: off/on)  bit
+  10023               MM17D red LED               (0/1: off/on)  bit
   30001               MM17D int. humidity in percent             integer
   30002               MM17D int. temperature in degree Celsius   integer
   30003               MM17D ext. temperature in degree Celsius   integer
