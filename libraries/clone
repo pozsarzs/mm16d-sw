@@ -9,3 +9,4 @@
 git clone https://github.com/emelianov/modbus-esp8266
 git clone https://github.com/esp8266/Arduino
 git clone https://github.com/arduino-libraries/NTPClient
+git clone https://github.com/aharshac/StringSplitter
