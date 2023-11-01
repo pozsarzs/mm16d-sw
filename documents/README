@@ -28,10 +28,12 @@ Requirements:
 In the 'mm16d.ino' file:
 
   // settings
-  const int     COM_SPEED         = 9600;
-  const int     MB_UID            = 1;
-  const char   *WIFI_SSID         = "";
-  const char   *WIFI_PASSWORD     = "";
+  const int     COM_SPEED                 = 9600;
+  const String  DBSERVER                  = "0.0.0.0";
+  const char   *NTPSERVER                 = "europe.pool.ntp.org";
+  const char   *WIFI_SSID                 = "";
+  const char   *WIFI_PASSWORD             = "";
+  const int     MB_UID                    = 1; // slave device UID
 
 3. Serial console output
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,9 +50,11 @@ MM16D * Grow house controller
     my IP address:          192.168.0.103
     subnet mask:            255.255.255.0
     gateway IP address:     192.168.0.1
+  * Starting NTP client
   * Starting Modbus/TCP server
   * Starting Modbus/RTU master
     serial port speed:      9600
+    client Modbus UID:      1
   * Starting webserver
   * Ready, the serial console is off.
   
