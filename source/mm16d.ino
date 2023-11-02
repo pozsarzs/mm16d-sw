@@ -12,10 +12,10 @@
 // ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE.
 
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
 #include <ModbusIP_ESP8266.h>
 #include <ModbusRTU.h>
 #include <NTPClient.h>
@@ -66,7 +66,7 @@ const String  TEXTPLAIN                 = "text/plain";
 // Modbus registers
 boolean       di_values[23]             = {};
 int           ir_values[3]              = {};
-int           hr_values[26]             = {};
+int           hr_values[28]             = {};
 
 // environment parameters with default values
 // growing hyphae: no light and airing
@@ -117,11 +117,11 @@ const String MSG[35]                    =
   /*  9 */  "  my IP address:          ",
   /* 10 */  "  subnet mask:            ",
   /* 11 */  "  gateway IP address:     ",
-  /* 12 */  "* Starting NTP client",
+  /* 12 */  "* Starting NTP client:    ",
   /* 13 */  "* Starting Modbus/TCP server",
   /* 14 */  "* Starting Modbus/RTU master",
   /* 15 */  "  slave Modbus UID:       ",
-  /* 16 */  "  serial port speed:      "
+  /* 16 */  "  serial port speed:      ",
   /* 17 */  "* Starting webserver",
   /* 18 */  "* Ready, the serial console is off.",
   /* 19 */  "* Modbus query received ",
@@ -175,7 +175,7 @@ const String  IR_DESC[3]                =
 };
 
 WiFiUDP ntpUDP;
-ESP8266WebServer server(80);
+ESP8266WebServer httpserver(80);
 ModbusIP mbtcp;
 ModbusRTU mbrtu;
 NTPClient timeClient(ntpUDP, NTPSERVER, 0, 32767);
@@ -253,18 +253,11 @@ void fillholdingregisters()
   // serial speed
   s = String(COM_SPEED);
   while (s.length() < 6)
-  {
     s = char(0x00) + s;
-  }
-  for (int i = 0; i < 7; i++)
-  {
+  for (int i = 0; i < 6; i++)
     hr_values[22 + i] = char(s[i]);
-  }
-  for (int i = 0; i < 29; i++)
-  {
+  for (int i = 0; i < 27; i++)
     mbtcp.Hreg(i, hr_values[i]);
-    mbrtu.Hreg(i, hr_values[i]);
-  }
 }
 
 // switch on/off blue LED
@@ -278,7 +271,6 @@ void redled(boolean b)
 {
   di_values[0] = b;
   mbtcp.Ists(0, di_values[0]);
-  mbrtu.Ists(0, di_values[0]);
   digitalWrite(PRT_DO_LEDRED, di_values[0]);
 }
 
@@ -350,8 +342,7 @@ void getinputs()
 void analise()
 {
   int h = timeClient.getHours();
-  int m = timeClient.getHours();
-
+  int m = timeClient.getMinutes();
   // extreme measured values
   // - bad humidity
   if (ir_values[0] < mhumidity_min) ir_values[16] = true; else ir_values[16] = false;
@@ -448,7 +439,7 @@ boolean writelogtoremotedb(String ipaddress)
 uint16_t modbusquery(TRegister * reg, uint16_t val)
 {
   blinkblueled();
-  writetosyslog(15);
+  writetosyslog(19);
   return val;
 }
 
@@ -456,24 +447,25 @@ uint16_t modbusquery(TRegister * reg, uint16_t val)
 void httpquery()
 {
   blinkblueled();
-  writetosyslog(14);
+  writetosyslog(20);
 }
 
 // error 404 page
 void handleNotFound()
 {
-  server.send(404, TEXTPLAIN, MSG[19]);
+  httpserver.send(404, TEXTPLAIN, MSG[27]);
 }
 
 // loop function
 void loop(void)
 {
-  timeClient.update();
-  di_values[3] = !timeClient.isTimeSet();
-  if (di_values[3]) writetosyslog(20);
+  httpserver.handleClient();
   unsigned long currtime = millis();
   if (currtime - prevtime >= INTERVAL)
   {
+    timeClient.update();
+    di_values[3] = !timeClient.isTimeSet();
+    if (di_values[3]) writetosyslog(20);
     prevtime = currtime;
     di_values[4] = ! readconfigfromremotedb(DBSERVER);
     di_values[5] = ! readenvirparamsfromdevice();
@@ -532,39 +524,39 @@ void setup(void)
   Serial.println(MSG[11] + WiFi.gatewayIP().toString());
   // start NTP client
   writetosyslog(12);
-  Serial.println(MSG[12]);
   timeClient.begin();
-  // start Modbus/TCP server
+  timeClient.update();
+  int h = timeClient.getHours();
+  int m = timeClient.getMinutes();
+  Serial.println(MSG[12] + String(h) + ":" + String(m));
+  // start Modbus / TCP server
   writetosyslog(13);
   Serial.println(MSG[13]);
   mbtcp.server();
-  // start Modbus/RTU master
+  // start Modbus / RTU master
   writetosyslog(14);
   Serial.println(MSG[14]);
+  Serial.println(MSG[15] + String(MB_UID));
+  Serial.println(MSG[16] + String(COM_SPEED));
   mbrtu.begin(&Serial);
   mbrtu.setBaudrate(COM_SPEED);
   mbrtu.master();
-  Serial.println(MSG[15] + String(MB_UID));
-  Serial.println(MSG[16] + String(COM_SPEED));
   // set Modbus registers
   mbtcp.addIsts(0, false, 23);
-  mbrtu.addIsts(0, false, 23);
   mbtcp.addIreg(0, 0, 3);
-  mbrtu.addIreg(0, 0, 3);
   mbtcp.addHreg(0, 0, 28);
-  mbrtu.addHreg(0, 0, 28);
   // set Modbus callback
   mbtcp.onGetIsts(0, modbusquery, 1);
   mbtcp.onGetIreg(0, modbusquery, 1);
-  mbrtu.onGetHreg(0, modbusquery, 1);
+  mbtcp.onGetHreg(0, modbusquery, 1);
   // fill Modbus holding registers
   fillholdingregisters();
   // start webserver
   writetosyslog(17);
-  Serial.print(MSG[17]);
-  server.onNotFound(handleNotFound);
+  Serial.println(MSG[17]);
+  httpserver.onNotFound(handleNotFound);
   // help page
-  server.on("/", []()
+  httpserver.on("/", []()
   {
     writetosyslog(21);
     line =
@@ -679,12 +671,12 @@ void setup(void)
       "    <br>\n"
       "  </body>\n"
       "</html>\n";
-    server.send(200, TEXTHTML, line);
+    httpserver.send(200, TEXTHTML, line);
     httpquery();
     delay(100);
   });
   // summary page
-  server.on("/summary", []()
+  httpserver.on("/summary", []()
   {
     writetosyslog(22);
     line =
@@ -727,12 +719,12 @@ void setup(void)
       "    <br>\n"
       "  </body>\n"
       "</html>\n";
-    server.send(200, TEXTHTML, line);
+    httpserver.send(200, TEXTHTML, line);
     httpquery();
     delay(100);
   });
   // log page
-  server.on("/log", []()
+  httpserver.on("/log", []()
   {
     writetosyslog(23);
     line =
@@ -762,12 +754,12 @@ void setup(void)
       "    <br>\n"
       "  </body>\n"
       "</html>\n";
-    server.send(200, TEXTHTML, line);
+    httpserver.send(200, TEXTHTML, line);
     httpquery();
     delay(100);
   });
   // get all measured data in CSV format
-  server.on("/get/csv", []()
+  httpserver.on("/get/csv", []()
   {
     writetosyslog(24);
     line = "\"" + HR_NAME[0] + "\",\"" + SWNAME + "\"\n"
@@ -780,12 +772,12 @@ void setup(void)
       line += "\"" + IR_NAME[i] + "\",\"" + String(ir_values[i]) + "\"\n";
     for (int i = 0; i < 23; i++)
       line += "\"" + DI_NAME[i] + "\",\"" + String(di_values[i]) + "\"\n";
-    server.send(200, TEXTPLAIN, line);
+    httpserver.send(200, TEXTPLAIN, line);
     httpquery();
     delay(100);
   });
   // get all measured values in JSON format
-  server.on("/get/json", []()
+  httpserver.on("/get/json", []()
   {
     writetosyslog(24);
     line = "{\n"
@@ -817,12 +809,12 @@ void setup(void)
       "  }\n"
       "}\n";
 
-    server.send(200, TEXTPLAIN, line);
+    httpserver.send(200, TEXTPLAIN, line);
     httpquery();
     delay(100);
   });
   // get all measured data in TXT format
-  server.on("/get/txt", []()
+  httpserver.on("/get/txt", []()
   {
     writetosyslog(24);
     line = SWNAME + "\n" +
@@ -835,12 +827,12 @@ void setup(void)
       line += String(ir_values[i]) + "\n";
     for (int i = 0; i < 23; i++)
       line += String(di_values[i]) + "\n";
-    server.send(200, TEXTPLAIN, line);
+    httpserver.send(200, TEXTPLAIN, line);
     httpquery();
     delay(100);
   });
   // get all measured values in XML format
-  server.on("/get/xml", []()
+  httpserver.on("/get/xml", []()
   {
     writetosyslog(24);
     line = "<xml>\n"
@@ -865,11 +857,11 @@ void setup(void)
     line +=
       "  </bit>\n"
       "</xml>";
-    server.send(200, TEXTPLAIN, line);
+    httpserver.send(200, TEXTPLAIN, line);
     httpquery();
     delay(100);
   });
-  server.begin();
+  httpserver.begin();
   Serial.println(MSG[18]);
   beep(1);
 }
