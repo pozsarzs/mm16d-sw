@@ -229,6 +229,8 @@ b. Data access with HTTP:
     </xml>
 
 c.Data access with Modbus:
+
+  Status (RO):
   10001               Sign lights              (0/1: red/green)  bit
   10002               Alarm                 (0/1: normal/alarm)  bit
   10003               Overcurrent breaker  (0/1: closed/opened)  bit
@@ -239,9 +241,9 @@ c.Data access with Modbus:
   10008               Growing hyphae operation mode              bit
   10009               Growing mushroom operation mode            bit
   10010               Manual switch               (0/1: off/on)  bit
-  10011               Enable lamps        (0/1: disable/enable)  bit
-  10012               Enable ventilators  (0/1: disable/enable)  bit
-  10013               Enable heater       (0/1: disable/enable)  bit
+  10011               Enable lamp output            (1: enable)  bit
+  10012               Enable ventilator output      (1: enable)  bit
+  10013               Enable heater output          (1: enable)  bit
   10014               Lamp output                 (0/1: off/on)  bit
   10015               Ventilator output           (0/1: off/on)  bit
   10016               Heater output               (0/1: off/on)  bit
@@ -253,16 +255,51 @@ c.Data access with Modbus:
   10022               MM17D yellow LED            (0/1: off/on)  bit
   10023               MM17D red LED               (0/1: off/on)  bit
 
+  Measured values (RO):
   30001               MM17D int. humidity in percent             integer
-  30002               MM17D int. temperature in degree Celsius   integer
-  30003               MM17D ext. temperature in degree Celsius   integer
+  30002               MM17D int. temperature in Kelvin           integer
+  30003               MM17D ext. temperature in Kelvin           integer
 
+  Configuration (RO):
   40001-40008         device name                  8 ASCII coded char
-  40009-40011         software versio                          3 byte
+  40009-40011         software version                         3 byte
   40012-40017         MAC address                              6 byte
   40018-40021         IP address                               4 byte
-  40022               always zero                                integer
+  40022               Modbus UID                                 integer
   40023-40028         serial port speed            6 ASCII coded char
+
+  Settings (R/W):
+  40101               enable channels                          3 bit
+
+
+/*
+
+  40102-40103         hheater_disable[24]       = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  40104               hheater_on                = 19; // in Kelvin
+  40105               hheater_off               = 20; // in Kelvin
+  40106               htemperature_min          = 17; // in Kelvin
+  40107               htemperature_max          = 25; // in Kelvin
+  40118               hhumidity_min             = 85; // in percent
+  40119               hhumidity_max             = 95; // in percent
+  40110-40111         mheater_disable[24]       = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  40112-40113         mvent_disable[24]         = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  40114-40115         mvent_disablehightemp[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  40116-40117         mvent_disablelowtemp[24]  = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  40118               mheater_on                = 14; // in Kelvin
+  40119               mheater_off               = 16; // in Kelvin
+  40120               mtemperature_min          = 8;  // in Kelvin
+  40121               mtemperature_max          = 18; // in Kelvin
+  40122               mhumidity_min             = 85; // in percent
+  40123               mhumidity_max             = 95; // in percent
+  40124               mlight_off                = 22; // in hour
+  40125               mlight_on                 = 14; // in hour
+  40126               mvent_on                  = 15; // in minute
+  40127               mvent_off                 = 30; // in minute
+  40128               mvent_hightemp            = 30; // in Kelvin
+  40129               mvent_lowtemp             = 10; // in Kelvin
+*/
+
+
 
 5. How to get installer package?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
