@@ -29,7 +29,6 @@ In the 'mm16d.ino' file:
 
   // settings
   const int     COM_SPEED                 = 9600;
-  const String  DBSERVER                  = "0.0.0.0";
   const char   *NTPSERVER                 = "europe.pool.ntp.org";
   const char   *WIFI_SSID                 = "";
   const char   *WIFI_PASSWORD             = "";
@@ -73,38 +72,66 @@ b. Data access with HTTP:
 
   Output format:
   CSV:
-    "name","MM17D"
+    "name","MM16D"
     "version","0.1.0"
-    "mac_address","80:7D:3A:5D:53:84"
-    "ip_address","192.168.0.103"
-    "modbus_uid","0"
+    "mac_address","EC:FA:BC:C1:0A:72"
+    "ip_address","192.168.0.245"
+    "modbus_uid","1"
     "com_speed","9600"
-    "signlight","1"
-    "alarm","0"
-    "breaker","0"
+    "enable_channels","0"
+    "hheater_disable1","0"
+    "hheater_disable2","0"
+    "hheater_on","0"
+    "hheater_off","0"
+    "htemperature_min","0"
+    "htemperature_max","0"
+    "hhumidity_min","0"
+    "hhumidity_max","0"
+    "mheater_disable1","0"
+    "mheater_disable2","0"
+    "mvent_disable1","0"
+    "mvent_disable2","0"
+    "mvent_disablehightemp1","0"
+    "mvent_disablehightemp2","0"
+    "mvent_disablelowtemp1","0"
+    "mvent_disablelowtemp2","0"
+    "mheater_on","0"
+    "mheater_off","0"
+    "mtemperature_min","0"
+    "mtemperature_max","0"
+    "mhumidity_min","0"
+    "mhumidity_max","0"
+    "mlight_off","0"
+    "mlight_on","0"
+    "mvent_on","0"
+    "mvent_off","0"
+    "mvent_hightemp","0"
+    "mvent_lowtemp","0"
+    "mm17drhint","0"
+    "mm17dtint","0"
+    "mm17dtext","0"
+    "signlight","0"
+    "alarm","1"
+    "breaker","1"
     "errorntp","0"
-    "errordb","0"
     "errormm17d","0"
-    "standby","0"
+    "standby","1"
     "hyphae","0"
-    "mushroom","1"
-    "manual","0"
-    "enalamp","1"
-    "enavent","1"
-    "enaheater","1"
-    "lamp","1"
+    "mushroom","0"
+    "manual","1"
+    "ena_lamp","1"
+    "ena_vent","0"
+    "ena_heater","0"
+    "lamp","0"
     "vent","0"
     "heater","0"
     "rhintless","0"
     "rhintmore","0"
     "tintless","0"
     "tintmore","0"
-    "mm17dgreen","1"
+    "mm17dgreen","0"
     "mm17dyellow","0"
-    "mm17dred""0"
-    "rhint","83"
-    "tint","19"
-    "text","-2"
+    "mm17dred","0"
  
   TXT:
     MM17D
@@ -119,115 +146,165 @@ b. Data access with HTTP:
     0
     0
     0
-    0
-    0
-    1
-    0
-    1
-    1
-    1
+    {...}
     1
     0
     0
-    0
-    0
-    0
-    0
-    1
-    0
-    0
-    83
-    19
-    -2
 
   JSON:
-    "{
-      "software": {
-        "name": "MM17D",
+{
+    "software": {
+        "name": "MM16D",
         "version": "0.1.0"
-      },
-      "hardware": {
-        "mac_address": "80:7D:3A:5D:53:84",
-        "ip_address": "192.168.0.103",
-        "modbus_uid": "0",
+    },
+    "hardware": {
+        "mac_address": "EC:FA:BC:C1:0A:72",
+        "ip_address": "192.168.0.245",
+        "modbus_uid": "1",
         "com_speed": "9600"
-      },
-      "integer": {
-        "rhint": "83",
-        "tint": "19",
-        "text": "-2"
-      },
-      "bit": {
-        "signlight": "1",
-        "alarm": "0",
-        "breaker": "0",
-        "errorntp": "0",
-        "errordb": "0",
-        "errormm17d": "0",
-        "standby": "0",
-        "hyphae": "0",
-        "mushroom": "1",
-        "manual": "0",
-        "enalamp": "1",
-        "enavent": "1",
-        "enaheater": "1",
-        "lamp": "1",
-        "vent": "0",
-        "heater": "0",
-        "rhintless": "0",
-        "rhintmore": "0",
-        "tintless": "0",
-        "tintmore": "0",
-        "mm17dgreen": "1",
-        "mm17dyellow": "0",
-        "mm17dred""0"
-      }
+    },
+    "settings": {
+        "integer": {
+            "enable_channels": "0",
+            "hheater_disable1": "0",
+            "hheater_disable2": "0",
+            "hheater_on": "0",
+            "hheater_off": "0",
+            "htemperature_min": "0",
+            "htemperature_max": "0",
+            "hhumidity_min": "0",
+            "hhumidity_max": "0",
+            "mheater_disable1": "0",
+            "mheater_disable2": "0",
+            "mvent_disable1": "0",
+            "mvent_disable2": "0",
+            "mvent_disablehightemp1": "0",
+            "mvent_disablehightemp2": "0",
+            "mvent_disablelowtemp1": "0",
+            "mvent_disablelowtemp2": "0",
+            "mheater_on": "0",
+            "mheater_off": "0",
+            "mtemperature_min": "0",
+            "mtemperature_max": "0",
+            "mhumidity_min": "0",
+            "mhumidity_max": "0",
+            "mlight_off": "0",
+            "mlight_on": "0",
+            "mvent_on": "0",
+            "mvent_off": "0",
+            "mvent_hightemp": "0",
+            "mvent_lowtemp": "0"
+        }
+    },
+    "data": {
+        "integer": {
+            "mm17drhint": "0",
+            "mm17dtint": "0",
+            "mm17dtext": "0"
+        },
+        "bit": {
+            "signlight": "0",
+            "alarm": "0",
+            "breaker": "0",
+            "errorntp": "0",
+            "errormm17d": "0",
+            "standby": "0",
+            "hyphae": "0",
+            "mushroom": "0",
+            "manual": "0",
+            "ena_lamp": "0",
+            "ena_vent": "0",
+            "ena_heater": "0",
+            "lamp": "0",
+            "vent": "0",
+            "heater": "0",
+            "rhintless": "0",
+            "rhintmore": "0",
+            "tintless": "0",
+            "tintmore": "0",
+            "mm17dgreen": "0",
+            "mm17dyellow": "0",
+            "mm17dred": "0"
+        }
     }
+}
 
   XML:
-    <xml>
-      <software>
-        <name>MM17D</name>
-        <version>0.1</version>
-      </software>
-      <hardware>
-        <mac_address>80:7D:3A:5D:53:84</mac_address>
-        <ip_address>192.168.0.103</ip_address>
-        <modbus_uid>0</modbus_uid>
-        <com_speed>9600</com_speed>
-      </hardware>
-      <integer>
-        <rhint>83</rhint>
-        <tint>19</tint>
-        <text>-2</text>
-      </integer>
-      <bit>
-        <signlight>1</signlight>
-        <alarm>0</alarm>
-        <breaker>0</breaker>
-        <errorntp>0</errorntp>
-        <errordb>0</errordb>
-        <errormm17d>0</errormm17d>
-        <standby>0</standby>
-        <hyphae>0</hyphae>
-        <mushroom>1</mushroom>
-        <manual>0</manual>
-        <enalamp>1</enalamp>
-        <enavent>1</enavent>
-        <enaheater>1</enaheater>
-        <lamp>1</lamp>
-        <vent>0</vent>
-        <heater>0</heater>
-        <rhintless>0</hintless>
-        <rhintmore>0</rhintmore>
-        <tintless>0</tintless>
-        <tintmore>0</tintmore>
-        <mm17dgreen>1</mm17dgreen>
-        <mm17dyellow>0</mm17dyellow>
-        <mm17dred>0</mm17dred>
-      </bit>
-    </xml>
-
+<xml>
+  <software>
+    <name>MM16D</name>
+    <version>0.1.0</version>
+  </software>
+  <hardware>
+    <mac_address>EC:FA:BC:C1:0A:72</mac_address>
+    <ip_address>192.168.0.245</ip_address>
+    <modbus_uid>1</modbus_uid>
+    <com_speed>9600</com_speed>
+  </hardware>
+  <settings>
+      <enable_channels>0</enable_channels>
+      <hheater_disable1>0</hheater_disable1>
+      <hheater_disable2>0</hheater_disable2>
+      <hheater_on>0</hheater_on>
+      <hheater_off>0</hheater_off>
+      <htemperature_min>0</htemperature_min>
+      <htemperature_max>0</htemperature_max>
+      <hhumidity_min>0</hhumidity_min>
+      <hhumidity_max>0</hhumidity_max>
+      <mheater_disable1>0</mheater_disable1>
+      <mheater_disable2>0</mheater_disable2>
+      <mvent_disable1>0</mvent_disable1>
+      <mvent_disable2>0</mvent_disable2>
+      <mvent_disablehightemp1>0</mvent_disablehightemp1>
+      <mvent_disablehightemp2>0</mvent_disablehightemp2>
+      <mvent_disablelowtemp1>0</mvent_disablelowtemp1>
+      <mvent_disablelowtemp2>0</mvent_disablelowtemp2>
+      <mheater_on>0</mheater_on>
+      <mheater_off>0</mheater_off>
+      <mtemperature_min>0</mtemperature_min>
+      <mtemperature_max>0</mtemperature_max>
+      <mhumidity_min>0</mhumidity_min>
+      <mhumidity_max>0</mhumidity_max>
+      <mlight_off>0</mlight_off>
+      <mlight_on>0</mlight_on>
+      <mvent_on>0</mvent_on>
+      <mvent_off>0</mvent_off>
+      <mvent_hightemp>0</mvent_hightemp>
+      <mvent_lowtemp>0</mvent_lowtemp>
+  </settings>
+  <data>
+    <integer>
+      <mm17drhint>0</mm17drhint>
+      <mm17dtint>0</mm17dtint>
+      <mm17dtext>0</mm17dtext>
+    </integer>
+    <bit>
+      <signlight>0</signlight>
+      <alarm>1</alarm>
+      <breaker>1</breaker>
+      <errorntp>0</errorntp>
+      <errormm17d>0</errormm17d>
+      <standby>1</standby>
+      <hyphae>0</hyphae>
+      <mushroom>0</mushroom>
+      <manual>1</manual>
+      <ena_lamp>1</ena_lamp>
+      <ena_vent>0</ena_vent>
+      <ena_heater>0</ena_heater>
+      <lamp>0</lamp>
+      <vent>0</vent>
+      <heater>0</heater>
+      <rhintless>0</rhintless>
+      <rhintmore>0</rhintmore>
+      <tintless>0</tintless>
+      <tintmore>0</tintmore>
+      <mm17dgreen>0</mm17dgreen>
+      <mm17dyellow>0</mm17dyellow>
+      <mm17dred>0</mm17dred>
+    </bit>
+  </data>
+ </xml>
+ 
 c.Data access with Modbus:
 
   Status (RO):
@@ -235,30 +312,29 @@ c.Data access with Modbus:
   10002               Alarm                 (0/1: normal/alarm)  bit
   10003               Overcurrent breaker  (0/1: closed/opened)  bit
   10004               No connection to the NTP server            bit
-  10005               No connection to the database server       bit
-  10006               No connection to the MM17D                 bit
-  10007               Stand-by operation mode                    bit
-  10008               Growing hyphae operation mode              bit
-  10009               Growing mushroom operation mode            bit
-  10010               Manual switch               (0/1: off/on)  bit
-  10011               Enable lamp output            (1: enable)  bit
-  10012               Enable ventilator output      (1: enable)  bit
-  10013               Enable heater output          (1: enable)  bit
-  10014               Lamp output                 (0/1: off/on)  bit
-  10015               Ventilator output           (0/1: off/on)  bit
-  10016               Heater output               (0/1: off/on)  bit
-  10017               Internal humidity is less than requied     bit
-  10018               Internal humidity is more than requied     bit
-  10019               Internal temperature is less than requied  bit
-  10020               Internal temperature is more than requied  bit
-  10021               MM17D green LED             (0/1: off/on)  bit
-  10022               MM17D yellow LED            (0/1: off/on)  bit
-  10023               MM17D red LED               (0/1: off/on)  bit
+  10005               No connection to the MM17D                 bit
+  10006               Stand-by operation mode                    bit
+  10007               Growing hyphae operation mode              bit
+  10008               Growing mushroom operation mode            bit
+  10009               Manual switch               (0/1: off/on)  bit
+  10010               Enable lamp output            (1: enable)  bit
+  10011               Enable ventilator output      (1: enable)  bit
+  10012               Enable heater output          (1: enable)  bit
+  10013               Lamp output                 (0/1: off/on)  bit
+  10014               Ventilator output           (0/1: off/on)  bit
+  10015               Heater output               (0/1: off/on)  bit
+  10016               Internal humidity is less than requied     bit
+  10017               Internal humidity is more than requied     bit
+  10018               Internal temperature is less than requied  bit
+  10019               Internal temperature is more than requied  bit
+  10020               MM17D green LED             (0/1: off/on)  bit
+  10021               MM17D yellow LED            (0/1: off/on)  bit
+  10022               MM17D red LED               (0/1: off/on)  bit
 
   Measured values (RO):
-  30001               MM17D int. humidity in percent             integer
-  30002               MM17D int. temperature in Kelvin           integer
-  30003               MM17D ext. temperature in Kelvin           integer
+  30001               MM17D int. humidity in percent             uint16
+  30002               MM17D int. temperature in Kelvin           uint16
+  30003               MM17D ext. temperature in Kelvin           uint16
 
   Configuration (RO):
   40001-40008         device name                  8 ASCII coded char
@@ -269,15 +345,15 @@ c.Data access with Modbus:
   40023-40028         serial port speed            6 ASCII coded char
 
   Settings (R/W):
-  40101               enable channels                          3 bit
+  40101               enable/disable channels                          3 bit
 
 
 /*
 
-  40102-40103         hheater_disable[24]       = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-  40104               hheater_on                = 19; // in Kelvin
-  40105               hheater_off               = 20; // in Kelvin
-  40106               htemperature_min          = 17; // in Kelvin
+  40102-40103         time-dependent heating prohibition in h      = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  40104               heating switch-on temperature in Kelvin
+  40105               heating switch-off temperature in Kelvin
+  40106               	minimum temperature in Kelvin
   40107               htemperature_max          = 25; // in Kelvin
   40118               hhumidity_min             = 85; // in percent
   40119               hhumidity_max             = 95; // in percent
@@ -297,6 +373,24 @@ c.Data access with Modbus:
   40127               mvent_off                 = 30; // in minute
   40128               mvent_hightemp            = 30; // in Kelvin
   40129               mvent_lowtemp             = 10; // in Kelvin
+ /*  0 */  "enable/disable channels",
+  /*  1 */  "time-dependent heating prohibition in h",
+  /*  2 */  "heating switch-on temperature in ",
+  /*  3 */  "heating switch-off temperature in ",
+  /*  4 */  "minimum temperature in ",
+  /*  5 */  "maximum temperature in ",
+  /*  6 */  "minimum humidity in %",
+  /*  7 */  "maximum humidity in %",
+  /*  8 */  "time-dependent ventilation prohibition in h",
+  /*  9 */  "high ext. temp. and time-dependent ventilation prohibition in h",
+  /* 10 */  "low ext. temp. and time-dependent ventilation prohibition in h",
+  /* 11 */  "external temperature upper limit in ",
+  /* 12 */  "external temperature lower limit in ",
+  /* 13 */  "lighting switch-off in h",
+  /* 14 */  "lighting switch-on in h",
+  /* 15 */  "ventilating switch-off in m",
+  /* 16 */  "ventilating switch-on in m"
+
 */
 
 
