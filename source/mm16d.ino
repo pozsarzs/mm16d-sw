@@ -108,8 +108,8 @@ const String  HR100_NAME[29]            =
   /* 40121       */ "mtemperature_max",
   /* 40122       */ "mhumidity_min",
   /* 40123       */ "mhumidity_max",
-  /* 40124       */ "mlight_off",
-  /* 40125       */ "mlight_on",
+  /* 40124       */ "mlight_on",
+  /* 40125       */ "mlight_off",
   /* 40126       */ "mvent_on",
   /* 40127       */ "mvent_off",
   /* 40128       */ "mvent_hightemp",
@@ -140,12 +140,12 @@ const uint16_t HR100_DEFVALUES[29]      =
   /* 40119       */ 283,
   /* 40120       */ 287,
   /* 40121       */ 289,
-  /* 40122       */ 281,
-  /* 40123       */ 291,
-  /* 40124       */ 85,
-  /* 40125       */ 95,
-  /* 40126       */ 22,
-  /* 40127       */ 14,
+  /* 40122       */ 85,
+  /* 40123       */ 95,
+  /* 40124       */ 14,
+  /* 40125       */ 22,
+  /* 40126       */ 15,
+  /* 40127       */ 45,
   /* 40128       */ 15,
   /* 40129       */ 30
 };
@@ -250,10 +250,10 @@ const String  HR100_DESC[17]            =
   /* 10 */  "low ext. temp. and time-dependent ventilation prohibition in h",
   /* 11 */  "external temperature upper limit in ",
   /* 12 */  "external temperature lower limit in ",
-  /* 13 */  "lighting switch-off in h",
-  /* 14 */  "lighting switch-on in h",
-  /* 15 */  "ventilating switch-off in m",
-  /* 16 */  "ventilating switch-on in m"
+  /* 13 */  "lighting switch-on in h",
+  /* 14 */  "lighting switch-off in h",
+  /* 15 */  "ventilating switch-on in m",
+  /* 16 */  "ventilating switch-off in m"
 };
 
 WiFiUDP ntpUDP;
@@ -295,13 +295,13 @@ void fillholdingregisters()
 {
   int    itemCount;
   String s;
-  // name
+  // name: 0-7/40001-40008
   s = SWNAME;
   while (s.length() < 8)
     s = char(0x00) + s;
-  for (int i = 0; i < 9; i++)
+  for (int i = 0; i < 8; i++)
     mbtcp.Hreg(i, char(s[i]));
-  // version
+  // version: 8-10/40009-40011
   StringSplitter *splitter1 = new StringSplitter(SWVERSION, '.', 3);
   itemCount = splitter1->getItemCount();
   for (int i = 0; i < itemCount; i++)
@@ -310,7 +310,7 @@ void fillholdingregisters()
     mbtcp.Hreg(8 + i, item.toInt());
   }
   delete splitter1;
-  // MAC-address
+  // MAC-address: 11-16/40012-40017
   StringSplitter *splitter2 = new StringSplitter(mymacaddress, ':', 6);
   itemCount = splitter2->getItemCount();
   for (int i = 0; i < itemCount; i++)
@@ -319,7 +319,7 @@ void fillholdingregisters()
     mbtcp.Hreg(11 + i, hstol(item));
   }
   delete splitter2;
-  // IP-address
+  // IP-address: 17-20/40018-40021
   StringSplitter *splitter3 = new StringSplitter(myipaddress, '.', 4);
   itemCount = splitter3->getItemCount();
   for (int i = 0; i < itemCount; i++)
@@ -328,16 +328,16 @@ void fillholdingregisters()
     mbtcp.Hreg(17 + i, item.toInt());
   }
   delete splitter3;
-  // MB UID
+  // MB UID: 21/40022
   mbtcp.Hreg(21, MB_UID);
-  // serial speed
+  // serial speed: 22-27/40023-40028
   s = String(COM_SPEED);
   while (s.length() < 6)
     s = char(0x00) + s;
-  for (int i = 0; i < 6; i++)
+  for (int i = 0; i < 7; i++)
     mbtcp.Hreg(22 + i, char(s[i]));
-  // default environment parameters
-  for (int i = 0; i < 29; i++) mbtcp.Hreg(i + 100, HR100_DEFVALUES[i]);
+  // default environment parameters: 100-128 40101-40129
+  for (int i = 0; i < 29; i++) mbtcp.Hreg(100 + i, HR100_DEFVALUES[i]);
 }
 
 // --- LEDS AND BUZZER ---
@@ -395,101 +395,100 @@ boolean readmm17d()
 // read GPIO ports
 void getinputs()
 {
-  for (int i = 6; i < 8; i++) mbtcp.Ists(i, false);
+  for (int i = 5; i < 8; i++) mbtcp.Ists(i, false);
   if (int(analogRead(PRT_AI_OPMODE)) < 100)
   {
-    mbtcp.Ists(6, true);
+    mbtcp.Ists(5, true);
   } else
   {
     if (int(analogRead(PRT_AI_OPMODE)) > 900)
     {
-      mbtcp.Ists(8, true);
+      mbtcp.Ists(7, true);
     } else
     {
-      mbtcp.Ists(7, true);
+      mbtcp.Ists(6, true);
     }
   }
   mbtcp.Ists(1, digitalRead(PRT_DI_ALARM));
   mbtcp.Ists(2, digitalRead(PRT_DI_OCPROT));
-  mbtcp.Ists(9, digitalRead(PRT_DI_SWMANU));
+  mbtcp.Ists(8, digitalRead(PRT_DI_SWMANU));
 }
 
 void analise()
-{ /*
-    int h = timeClient.getHours();
-    int m = timeClient.getMinutes();
-    // extreme measured values
-    // - bad humidity
-    if (mbtcp.Ireg(0) < mhumidity_min) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
-    if (mbtcp.Ireg(0) > mhumidity_max) mbtcp.Ists(17, true); else mbtcp.Ists(17, false);
-    // - bad temperature
-    if (mbtcp.Ireg(1) < mtemperature_min) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
-    if (mbtcp.Ireg(1) > mtemperature_max) mbtcp.Ists(19, true); else mbtcp.Ists(19, false);
-    // error LED/green-red sign light
-    mbtcp.Ists(0,  false);
-    // alarm, breaker, manual mode
-    if ((mbtcp.Ists(1)) or (mbtcp.Ists(2)) or (mbtcp.Ists(9))) mbtcp.Ists(0, true);
-    if (! mbtcp.Ists(6))
+{
+  int h = timeClient.getHours();
+  int m = timeClient.getMinutes();
+  // enable/disable channels
+  for (int i = 0; i < 3; i++)
+    if ((mbtcp.Hreg(100) and pow(2, i)) > 0)
+      mbtcp.Ists(9 + i, true);
+    else
+      mbtcp.Ists(9 + i, false);
+  // error LED/green-red sign light
+  mbtcp.Ists(0, false);
+  // alarm, breaker, manual mode
+  if ((mbtcp.Ists(1)) or (mbtcp.Ists(2)) or (mbtcp.Ists(8))) mbtcp.Ists(0, true);
+  if (! mbtcp.Ists(5))
+  {
+    if (mbtcp.Ists(6))
     {
-     if (mbtcp.Ists(7))
-     {
-       // HYPHAE OPERATION MODE
-       // extreme environment parameters
-       // - bad humidity
-       if (mbtcp.Ireg(0) < hhumidity_min) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
-       if (mbtcp.Ireg(0) > hhumidity_max) mbtcp.Ireg(17, true); else mbtcp.Ists(17, false);
-       // - bad temperature
-       if (mbtcp.Ireg(1) < htemperature_min) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
-       if (mbtcp.Ireg(1) > htemperature_max) mbtcp.Ists(19, true); else mbtcp.Ists(19, false);
-       // lamp
-       mbtcp.Ists(13,  false);
-       // ventilator
-       mbtcp.Ists(14,  false);
-       // heater
-       // - switching according to measured parameters
-       if (mbtcp.Ireg(1) < hheater_on) mbtcp.Ists(15, true);
-       if (mbtcp.Ireg(1) > hheater_off) mbtcp.Ists(15, false);
-       // - timed blocking
-       if (hheater_disable[h]) mbtcp.Ists(15, false);
-     } else
-     {
-       if (mbtcp.Ists(8))
-       {
-         // MUSHROOM OPERATION MODE
-         // extreme environment parameters
-         // - bad humidity
-         if (mbtcp.Ireg(0) < mhumidity_min) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
-         if (mbtcp.Ireg(0) > mhumidity_max) mbtcp.Ists(17, true); else mbtcp.Ists(17, false);
-         // - bad temperature
-         if (mbtcp.Ireg(1) < mtemperature_min) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
-         if (mbtcp.Ireg(1) > mtemperature_max) mbtcp.Ists(19, true); else mbtcp.Ists(19, false);
-         // lamp
-         // - switching according to measured parameters
-         if ((h >= mlight_on) and (h < mlight_off)) mbtcp.Ists(13, true); else mbtcp.Ists(13, false);
-         // ventilator
-         // - switching according to measured parameters
-         if ((m > mvent_on) and (m < mvent_off)) mbtcp.Ists(14, true); else mbtcp.Ists(14, false);
-         // - timed and external temperature blocking
-         if (mvent_disable[h]) mbtcp.Ists(14, false);
-         if ((mbtcp.Ireg(2) < mvent_lowtemp) and (mvent_disablelowtemp[h])) mbtcp.Ists(14, false);
-         if ((mbtcp.Ireg(2) > mvent_hightemp) and (mvent_disablehightemp[h])) mbtcp.Ists(14, false);
-         // - overriding due to extreme measured parameters
-         if ((mbtcp.Ireg(17)) and (mbtcp.Ireg(2) < mtemperature_max)) mbtcp.Ists(14, true);
-         if ((mbtcp.Ireg(19)) and (mbtcp.Ireg(2) < mtemperature_max)) mbtcp.Ists(14, true);
-         // heater
-         if (mbtcp.Ireg(1) < mheater_on) mbtcp.Ists(15, true);
-         if (mbtcp.Ireg(1) > mheater_off) mbtcp.Ists(15, false);
-         // - timed blocking
-         if (mheater_disable[h]) mbtcp.Ists(15, false);
-       }
-     }
+      // HYPHAE OPERATION MODE
+      // extreme environment parameters
+      // - bad humidity
+      if (mbtcp.Ireg(0) < mbtcp.Hreg(107)) mbtcp.Ists(15, true); else mbtcp.Ists(15, false);
+      if (mbtcp.Ireg(0) > mbtcp.Hreg(108)) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
+      // - bad temperature
+      if (mbtcp.Ireg(1) < mbtcp.Hreg(105)) mbtcp.Ists(17, true); else mbtcp.Ists(17, false);
+      if (mbtcp.Ireg(1) > mbtcp.Hreg(106)) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
+      // lamp
+      mbtcp.Ists(12,  false);
+      // ventilator
+      mbtcp.Ists(13,  false);
+      // heater
+      // - switching according to measured parameters
+      if (mbtcp.Ireg(1) < mbtcp.Hreg(103)) mbtcp.Ists(14, true);
+      if (mbtcp.Ireg(1) > mbtcp.Hreg(104)) mbtcp.Ists(14, false);
+      // - timed blocking
+      //if (hheater_disable[h]) mbtcp.Ists(14, false);
     } else
     {
-     // STAND-BY OPERATION MODE
-     for (int i = 13; i < 15; i++) mbtcp.Ists(i, false);
+      if (mbtcp.Ists(8))
+      {
+        // MUSHROOM OPERATION MODE
+        // extreme environment parameters
+        // - bad humidity
+        if (mbtcp.Ireg(0) < mbtcp.Hreg(121)) mbtcp.Ists(15, true); else mbtcp.Ists(15, false);
+        if (mbtcp.Ireg(0) > mbtcp.Hreg(122)) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
+        // - bad temperature
+        if (mbtcp.Ireg(1) < mbtcp.Hreg(119)) mbtcp.Ists(17, true); else mbtcp.Ists(17, false);
+        if (mbtcp.Ireg(1) > mbtcp.Hreg(120)) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
+        // lamp
+        // - switching according to measured parameters
+        if ((h >= mbtcp.Hreg(124)) and (h < mbtcp.Hreg(123))) mbtcp.Ists(12, true); else mbtcp.Ists(12, false);
+        // ventilator
+        // - switching according to measured parameters
+        if ((m > mbtcp.Hreg(125)) and (m < mbtcp.Hreg(126))) mbtcp.Ists(13, true); else mbtcp.Ists(13, false);
+        // - timed and external temperature blocking
+        //if (mvent_disable[h]) mbtcp.Ists(14, false);
+        //if ((mbtcp.Ireg(2) < mbtcp.Hreg(128)) and (mvent_disablelowtemp[h])) mbtcp.Ists(14, false);
+        //if ((mbtcp.Ireg(2) > mbtcp.Hreg(127)) and (mvent_disablehightemp[h])) mbtcp.Ists(14, false);
+        // - overriding due to extreme measured parameters
+        if ((mbtcp.Ireg(16)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(122)) mbtcp.Ists(14, true);
+        if ((mbtcp.Ireg(18)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(120)) mbtcp.Ists(14, true);
+        // heater
+        if (mbtcp.Ireg(1) < mbtcp.Hreg(117)) mbtcp.Ists(14, true);
+        if (mbtcp.Ireg(1) > mbtcp.Hreg(118)) mbtcp.Ists(14, false);
+        // - timed blocking
+        //if (mheater_disable[h]) mbtcp.Ists(15, false);
+      }
     }
-    for (int i = 16; i < 19; i++)
-     if (mbtcp.Ists(i)) writetosyslog(i + 6);*/
+  } else
+  {
+    // STAND-BY OPERATION MODE
+    for (int i = 12; i < 15; i++) mbtcp.Ists(i, false);
+  }
+  for (int i = 15; i < 19; i++)
+    if (mbtcp.Ists(i)) writetosyslog(i + 15);
 }
 
 // write GPIO ports
@@ -497,11 +496,11 @@ void setoutputs()
 {
   digitalWrite(PRT_DO_LEDRED, mbtcp.Ists(0));
   // enable/disable outputs
-  for (int i = 10; i < 12; i++)
+  for (int i = 9; i < 12; i++)
     if (! mbtcp.Ists(i)) mbtcp.Ists(i + 3, false);
-  digitalWrite(PRT_DO_LAMP, mbtcp.Ists(13));
-  digitalWrite(PRT_DO_VENT, mbtcp.Ists(14));
-  digitalWrite(PRT_DO_HEAT, mbtcp.Ists(15));
+  digitalWrite(PRT_DO_LAMP, mbtcp.Ists(12));
+  digitalWrite(PRT_DO_VENT, mbtcp.Ists(13));
+  digitalWrite(PRT_DO_HEAT, mbtcp.Ists(14));
 }
 
 // --- DATA RETRIEVING ---
@@ -546,7 +545,7 @@ void handleNotFound()
          "    <div align=\"right\"><a href=\"/\">back</a></div>"
          "    <br>\n"
          "    <hr>\n"
-         "    <center>" + MSG[2] + " <a href=\"" + MSG[28] + "\">" + MSG[34] + "</a></center>\n"
+         "    <center>" + MSG[2] + " <a href=\"" + MSG[34] + "\">" + MSG[34] + "</a></center>\n"
          "    <br>\n"
          "  </body>\n"
          "</html>\n";
@@ -739,7 +738,7 @@ void handleHelp()
   line += "    </table>\n"
           "    <br>\n"
           "    <hr>\n"
-          "    <center>" + MSG[2] + " <a href=\"" + MSG[28] + "\">" + MSG[34] + "</a></center>\n"
+          "    <center>" + MSG[2] + " <a href=\"" + MSG[34] + "\">" + MSG[34] + "</a></center>\n"
           "    <br>\n"
           "  </body>\n"
           "</html>\n";
@@ -748,10 +747,28 @@ void handleHelp()
   delay(100);
 }
 
+// convert uint16_t to String in binary format
+String dec2binint(uint16_t myNum, byte NumberOfBits)
+{
+  String s;
+  if (NumberOfBits <= 16)
+  {
+    myNum = myNum << (16 - NumberOfBits);
+    for (int i = 0; i < NumberOfBits; i++)
+    {
+      if (bitRead(myNum, 15) == 1) s += "1"; else s += "0";
+      myNum = myNum << 1;
+    }
+  }
+  return s;
+}
+
 // summary page
 void handleSummary()
 {
+  const int CC = 273;
   String s;
+  int ii;
   writetosyslog(22);
   line = DOCTYPEHTML +
          "<html>\n"
@@ -771,51 +788,62 @@ void handleSummary()
          "    <table border=\"1\" cellpadding=\"3\" cellspacing=\"0\">\n"
          "      <tr>\n"
          "        <td>" + HR100_DESC[0] + "</td>\n"
-         "        <td align=\"right\">" + String(mbtcp.Hreg(100)) + "</td>\n"
+         "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(100), 3) + "</td>\n"
          "      </tr>\n"
          "      <tr>\n"
          "        <td>hyphae - " + HR100_DESC[1] + "</td>\n"
-         "        <td align=\"right\">" + String(mbtcp.Hreg(101)) + String(mbtcp.Hreg(102)) + "</td>\n"
+         "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(101), 8) + dec2binint(mbtcp.Hreg(102), 16) + "</td>\n"
          "      </tr>\n";
   for (int i = 0; i < 6; i++)
   {
     s = HR100_DESC[i + 2];
-    if (i < 4 ) s += "K";
+    ii = mbtcp.Hreg(i + 103);
+    if (i < 4 )
+    {
+      s += "&deg;C";
+      ii -= CC;
+    }
     line +=
       "      <tr>\n"
       "        <td>hyphae - " + s + "</td>\n"
-      "        <td align=\"right\">" + String(mbtcp.Hreg(i + 103)) + "</td>\n"
+      "        <td align=\"right\">" + String(ii) + "</td>\n"
       "      </tr>\n";
   }
   line +=
     "      <tr>\n"
     "        <td>mushroom -  " + HR100_DESC[1] + "</td>\n"
-    "        <td align=\"right\">" + String(mbtcp.Hreg(109)) + String(mbtcp.Hreg(110)) + "</td>\n"
+    //    "        <td align=\"right\">" + String(mbtcp.Hreg(109)) + String(mbtcp.Hreg(110)) + "</td>\n"
+    "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(109), 8) + dec2binint(mbtcp.Hreg(110), 16) + "</td>\n"
     "      </tr>\n";
   for (int i = 0; i < 3; i++)
   {
     line +=
       "      <tr>\n"
       "        <td>mushroom -  " + HR100_DESC[i + 8] + "</td>\n"
-      "        <td align=\"right\">" + String(mbtcp.Hreg(i + 111)) + String(mbtcp.Hreg(2 * i + 112)) + "</td>\n"
+      "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(i + 111), 8) + dec2binint(mbtcp.Hreg(2 * i + 112), 16) + "</td>\n"
       "      </tr>\n";
   }
   for (int i = 0; i < 2; i++)
   {
     line +=
       "      <tr>\n"
-      "        <td> mushroom - " + HR100_DESC[i + 11] + "K </td>\n"
-      "        <td align=\"right\">" + String(mbtcp.Hreg(i + 117)) + "</td>\n"
+      "        <td> mushroom - " + HR100_DESC[i + 11] + "&deg;C </td>\n"
+      "        <td align=\"right\">" + String(mbtcp.Hreg(i + 117) - CC) + "</td>\n"
       "      </tr>\n";
   }
   for (int i = 0; i < 6; i++)
   {
     s = HR100_DESC[i + 2];
-    if (i < 4 ) s += "K";
+    ii = mbtcp.Hreg(i + 119);
+    if (i < 4 )
+    {
+      s += "&deg;C";
+      ii -= CC;
+    }
     line +=
       "      <tr>\n"
       "        <td>mushroom - " + s + "</td>\n"
-      "        <td align=\"right\">" + String(mbtcp.Hreg(i + 119)) + "</td>\n"
+      "        <td align=\"right\">" + String(ii) + "</td>\n"
       "      </tr>\n";
   }
   for (int i = 0; i < 4; i++)
@@ -833,10 +861,18 @@ void handleSummary()
     "    <table border=\"1\" cellpadding=\"3\" cellspacing=\"0\">\n";
   for (int i = 0; i < 3; i++)
   {
+    s = IR_DESC[i];
+    ii = mbtcp.Ireg(i);
+    if (i > 0 )
+    {
+      s += "&deg;C";
+      ii -= CC;
+    }
+
     line +=
       "      <tr>\n"
-      "        <td>" + IR_DESC[i] + "</td>\n"
-      "        <td align=\"right\">" + String(mbtcp.Ireg(i)) + "</td>\n"
+      "        <td>" + s + "</td>\n"
+      "        <td align=\"right\">" + String(ii) + "</td>\n"
       "      </tr>\n";
   }
   for (int i = 0; i < 22; i++)
@@ -853,7 +889,7 @@ void handleSummary()
     "    <hr>\n"
     "    <div align=\"right\"><a href=\"/\">back</a></div>"
     "    <br>\n"
-    "    <center>" + MSG[2] + " <a href=\"" + MSG[28] + "\">" + MSG[34] + "</a></center>\n"
+    "    <center>" + MSG[2] + " <a href=\"" + MSG[34] + "\">" + MSG[34] + "</a></center>\n"
     "    <br>\n"
     "  </body>\n"
     "</html>\n";
@@ -891,7 +927,7 @@ void handleLog()
     "    <hr>\n"
     "    <div align=\"right\"><a href=\"/\">back</a></div>"
     "    <br>\n"
-    "    <center>" + MSG[2] + " <a href=\"" + MSG[28] + "\">" + MSG[34] + "</a></center>\n"
+    "    <center>" + MSG[2] + " <a href=\"" + MSG[34] + "\">" + MSG[34] + "</a></center>\n"
     "    <br>\n"
     "  </body>\n"
     "</html>\n";
@@ -1152,8 +1188,8 @@ void loop(void)
     timeClient.update();
     mbtcp.Ists(3, ! timeClient.isTimeSet());
     if (mbtcp.Ists(3)) writetosyslog(25);
-    mbtcp.Ists(5, ! readmm17d());
-    if (mbtcp.Ists(5)) writetosyslog(26);
+    mbtcp.Ists(4, ! readmm17d());
+    if (mbtcp.Ists(4)) writetosyslog(26);
     getinputs();
     analise();
     setoutputs();
