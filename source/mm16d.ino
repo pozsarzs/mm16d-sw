@@ -102,18 +102,18 @@ const String  HR100_NAME[29]            =
   /* 40115       */ "mvent_disablehightemp2",
   /* 40116       */ "mvent_disablelowtemp1",
   /* 40117       */ "mvent_disablelowtemp2",
-  /* 40118       */ "mheater_on",
-  /* 40119       */ "mheater_off",
-  /* 40120       */ "mtemperature_min",
-  /* 40121       */ "mtemperature_max",
-  /* 40122       */ "mhumidity_min",
-  /* 40123       */ "mhumidity_max",
-  /* 40124       */ "mlight_on",
-  /* 40125       */ "mlight_off",
-  /* 40126       */ "mvent_on",
-  /* 40127       */ "mvent_off",
-  /* 40128       */ "mvent_hightemp",
-  /* 40129       */ "mvent_lowtemp",
+  /* 40118       */ "mvent_hightemp",
+  /* 40119       */ "mvent_lowtemp",
+  /* 40120       */ "mheater_on",
+  /* 40121       */ "mheater_off",
+  /* 40122       */ "mtemperature_min",
+  /* 40123       */ "mtemperature_max",
+  /* 40124       */ "mhumidity_min",
+  /* 40125       */ "mhumidity_max",
+  /* 40126       */ "mlight_on",
+  /* 40127       */ "mlight_off",
+  /* 40128       */ "mvent_on",
+  /* 40129       */ "mvent_off",
 };
 
 // default environment parameters
@@ -137,17 +137,17 @@ const uint16_t HR100_DEFVALUES[29]      =
   /* 40116       */ 0, // 00000000 00000000
   /* 40117       */ 0, // 00000000 00000000
   /* 40118       */ 303,
-  /* 40119       */ 283,
-  /* 40120       */ 287,
-  /* 40121       */ 289,
-  /* 40122       */ 85,
-  /* 40123       */ 95,
-  /* 40124       */ 14,
-  /* 40125       */ 22,
-  /* 40126       */ 15,
-  /* 40127       */ 45,
+  /* 40119       */ 288,
+  /* 40120       */ 303,
+  /* 40121       */ 283,
+  /* 40122       */ 287,
+  /* 40123       */ 289,
+  /* 40124       */ 85,
+  /* 40125       */ 95,
+  /* 40126       */ 14,
+  /* 40127       */ 22,
   /* 40128       */ 15,
-  /* 40129       */ 30
+  /* 40129       */ 45
 };
 
 // other constants
@@ -457,27 +457,27 @@ void analise()
         // MUSHROOM OPERATION MODE
         // extreme environment parameters
         // - bad humidity
-        if (mbtcp.Ireg(0) < mbtcp.Hreg(121)) mbtcp.Ists(15, true); else mbtcp.Ists(15, false);
-        if (mbtcp.Ireg(0) > mbtcp.Hreg(122)) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
+        if (mbtcp.Ireg(0) < mbtcp.Hreg(123)) mbtcp.Ists(15, true); else mbtcp.Ists(15, false);
+        if (mbtcp.Ireg(0) > mbtcp.Hreg(124)) mbtcp.Ists(16, true); else mbtcp.Ists(16, false);
         // - bad temperature
-        if (mbtcp.Ireg(1) < mbtcp.Hreg(119)) mbtcp.Ists(17, true); else mbtcp.Ists(17, false);
-        if (mbtcp.Ireg(1) > mbtcp.Hreg(120)) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
+        if (mbtcp.Ireg(1) < mbtcp.Hreg(121)) mbtcp.Ists(17, true); else mbtcp.Ists(17, false);
+        if (mbtcp.Ireg(1) > mbtcp.Hreg(122)) mbtcp.Ists(18, true); else mbtcp.Ists(18, false);
         // lamp
-        // - switching according to measured parameters
-        if ((h >= mbtcp.Hreg(124)) and (h < mbtcp.Hreg(123))) mbtcp.Ists(12, true); else mbtcp.Ists(12, false);
+        // - timed switching
+        if ((h >= mbtcp.Hreg(125)) and (h < mbtcp.Hreg(126))) mbtcp.Ists(12, true); else mbtcp.Ists(12, false);
         // ventilator
-        // - switching according to measured parameters
-        if ((m > mbtcp.Hreg(125)) and (m < mbtcp.Hreg(126))) mbtcp.Ists(13, true); else mbtcp.Ists(13, false);
+        // - timed switching
+        if ((m > mbtcp.Hreg(127)) and (m < mbtcp.Hreg(128))) mbtcp.Ists(13, true); else mbtcp.Ists(13, false);
         // - timed and external temperature blocking
         //if (mvent_disable[h]) mbtcp.Ists(14, false);
         //if ((mbtcp.Ireg(2) < mbtcp.Hreg(128)) and (mvent_disablelowtemp[h])) mbtcp.Ists(14, false);
         //if ((mbtcp.Ireg(2) > mbtcp.Hreg(127)) and (mvent_disablehightemp[h])) mbtcp.Ists(14, false);
         // - overriding due to extreme measured parameters
-        if ((mbtcp.Ireg(16)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(122)) mbtcp.Ists(14, true);
-        if ((mbtcp.Ireg(18)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(120)) mbtcp.Ists(14, true);
+        if ((mbtcp.Ireg(16)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(124)) mbtcp.Ists(14, true);
+        if ((mbtcp.Ireg(18)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(122)) mbtcp.Ists(14, true);
         // heater
-        if (mbtcp.Ireg(1) < mbtcp.Hreg(117)) mbtcp.Ists(14, true);
-        if (mbtcp.Ireg(1) > mbtcp.Hreg(118)) mbtcp.Ists(14, false);
+        if (mbtcp.Ireg(1) < mbtcp.Hreg(119)) mbtcp.Ists(14, true);
+        if (mbtcp.Ireg(1) > mbtcp.Hreg(120)) mbtcp.Ists(14, false);
         // - timed blocking
         //if (mheater_disable[h]) mbtcp.Ists(15, false);
       }
@@ -711,7 +711,7 @@ void handleHelp()
     line +=
       "      <tr>\n"
       "        <td>" + String(i + 40118) + "</td>\n"
-      "        <td>growing mushroom - " + HR100_DESC[i + 11] + "K </td>\n"
+      "        <td>" + HR100_DESC[i + 11] + "K </td>\n"
       "        <td>uint16</td>\n"
       "      </tr>\n";
   }
@@ -812,7 +812,6 @@ void handleSummary()
   line +=
     "      <tr>\n"
     "        <td>mushroom -  " + HR100_DESC[1] + "</td>\n"
-    //    "        <td align=\"right\">" + String(mbtcp.Hreg(109)) + String(mbtcp.Hreg(110)) + "</td>\n"
     "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(109), 8) + dec2binint(mbtcp.Hreg(110), 16) + "</td>\n"
     "      </tr>\n";
   for (int i = 0; i < 3; i++)
@@ -827,7 +826,7 @@ void handleSummary()
   {
     line +=
       "      <tr>\n"
-      "        <td> mushroom - " + HR100_DESC[i + 11] + "&deg;C </td>\n"
+      "        <td>" + HR100_DESC[i + 11] + "&deg;C </td>\n"
       "        <td align=\"right\">" + String(mbtcp.Hreg(i + 117) - CC) + "</td>\n"
       "      </tr>\n";
   }
