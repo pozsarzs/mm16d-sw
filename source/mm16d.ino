@@ -25,7 +25,7 @@
 
 // settings
 const int     COM_SPEED                 = 9600;
-const int     MB_UID                    = 1; // mastermas device UID
+const int     MB_UID                    = 1; // slave device UID
 const char   *NTPSERVER                 = "europe.pool.ntp.org";
 const char   *WIFI_SSID                 = "";
 const char   *WIFI_PASSWORD             = "";
@@ -119,28 +119,28 @@ const String  HR100_NAME[29]            =
 // default environment parameters
 const uint16_t HR100_DEFVALUES[29]      =
 {
-  /* 40101       */ 7, // 00000000 00000111
-  /* 40102       */ 0, // 00000000 00000000
-  /* 40103       */ 0, // 00000000 00000000
+  /* 40101       */ 7, // 0b0000000000000111
+  /* 40102       */ 0, // 0b0000000000000000
+  /* 40103       */ 0, // 0b0000000000000000
   /* 40104       */ 292,
   /* 40105       */ 293,
   /* 40106       */ 290,
   /* 40107       */ 298,
   /* 40108       */ 85,
   /* 40109       */ 95,
-  /* 40110       */ 0, // 00000000 00000000
-  /* 40111       */ 0, // 00000000 00000000
-  /* 40112       */ 0, // 00000000 00000000
-  /* 40113       */ 0, // 00000000 00000000
-  /* 40114       */ 0, // 00000000 00000000
-  /* 40115       */ 0, // 00000000 00000000
-  /* 40116       */ 0, // 00000000 00000000
-  /* 40117       */ 0, // 00000000 00000000
+  /* 40110       */ 0, // 0b0000000000000000
+  /* 40111       */ 0, // 0b0000000000000000
+  /* 40112       */ 0, // 0b0000000000000000
+  /* 40113       */ 0, // 0b0000000000000000
+  /* 40114       */ 0, // 0b0000000000000000
+  /* 40115       */ 0, // 0b0000000000000000
+  /* 40116       */ 0, // 0b0000000000000000
+  /* 40117       */ 0, // 0b0000000000000000
   /* 40118       */ 303,
   /* 40119       */ 288,
-  /* 40120       */ 303,
-  /* 40121       */ 283,
-  /* 40122       */ 287,
+  /* 40120       */ 287,
+  /* 40121       */ 288,
+  /* 40122       */ 286,
   /* 40123       */ 289,
   /* 40124       */ 85,
   /* 40125       */ 95,
@@ -187,8 +187,8 @@ const String  MSG[35]                    =
   /* 16 */  "  serial port speed:      ",
   /* 17 */  "* Starting webserver",
   /* 18 */  "* Ready, the serial console is off.",
-  /* 19 */  "* Modbus query received ",
-  /* 20 */  "* HTTP query received ",
+  /* 19 */  "* Modbus query transmitted",
+  /* 20 */  "",
   /* 21 */  "  get help page",
   /* 22 */  "  get summary page",
   /* 23 */  "  get log page",
@@ -262,6 +262,28 @@ ModbusIP mbtcp;
 ModbusRTU mbrtu;
 NTPClient timeClient(ntpUDP, NTPSERVER, 0, 32767);
 
+// --- CONVERTERS ---
+// convert Hex string to byte
+byte hs2b(String recv) {
+  return strtol(recv.c_str(), NULL, 16);
+}
+
+// convert uint16_t to String in binary format
+String uint16t2bs(uint16_t myNum, byte NumberOfBits)
+{
+  String s;
+  if (NumberOfBits <= 16)
+  {
+    myNum = myNum << (16 - NumberOfBits);
+    for (int i = 0; i < NumberOfBits; i++)
+    {
+      if (bitRead(myNum, 15) == 1) s += "1"; else s += "0";
+      myNum = myNum << 1;
+    }
+  }
+  return s;
+}
+
 // --- SYSTEM LOG ---
 // write a line to system log
 void writetosyslog(int msgnum)
@@ -285,11 +307,6 @@ void writetosyslog(int msgnum)
 }
 
 // --- STATIC MODBUS REGISTERS ---
-// convert hex string to byte
-byte hstol(String recv) {
-  return strtol(recv.c_str(), NULL, 16);
-}
-
 // fill holding registers with configuration data
 void fillholdingregisters()
 {
@@ -316,7 +333,7 @@ void fillholdingregisters()
   for (int i = 0; i < itemCount; i++)
   {
     String item = splitter2->getItemAtIndex(i);
-    mbtcp.Hreg(11 + i, hstol(item));
+    mbtcp.Hreg(11 + i, hs2b(item));
   }
   delete splitter2;
   // IP-address: 17-20/40018-40021
@@ -386,10 +403,28 @@ void beep(int num)
 }
 
 // ---  CONTROL ---
+// callback
+boolean cb(Modbus::ResultCode event, uint16_t transactionId, void* data)
+{
+  if (event != Modbus::EX_SUCCESS) mbtcp.Hreg(4, true); else mbtcp.Hreg(4, false);
+  return true;
+}
+
 // read MM17D device
 boolean readmm17d()
 {
-  return false;
+  writetosyslog(19);
+  if (! mbrtu.slave())
+    mbrtu.pullIreg(MB_UID, 0, 0, 3, cb);
+  while (mbrtu.slave())
+    mbrtu.task();
+  blinkblueled();
+  if (! mbrtu.slave())
+    mbrtu.pullIsts(MB_UID, 0, 19, 3, cb);
+  while (mbrtu.slave())
+    mbrtu.task();
+  blinkblueled();
+  return ! mbtcp.Hreg(4);
 }
 
 // read GPIO ports
@@ -449,7 +484,12 @@ void analise()
       if (mbtcp.Ireg(1) < mbtcp.Hreg(103)) mbtcp.Ists(14, true);
       if (mbtcp.Ireg(1) > mbtcp.Hreg(104)) mbtcp.Ists(14, false);
       // - timed blocking
-      //if (hheater_disable[h]) mbtcp.Ists(14, false);
+      // ---- 40103 ----- ---- 40102 -----
+      //         22221111 1111110000000000
+      //         32109876 5432109876543210
+      // xxxxxxxx00000000 0000000000000000
+      if (h < 16)
+        mbtcp.Ists(14, ! (mbtcp.Hreg(102) and pow(2, h))); else mbtcp.Ists(14, ! (mbtcp.Hreg(103) and pow(2, h - 16)));
     } else
     {
       if (mbtcp.Ists(8))
@@ -469,9 +509,14 @@ void analise()
         // - timed switching
         if ((m > mbtcp.Hreg(127)) and (m < mbtcp.Hreg(128))) mbtcp.Ists(13, true); else mbtcp.Ists(13, false);
         // - timed and external temperature blocking
-        //if (mvent_disable[h]) mbtcp.Ists(14, false);
-        //if ((mbtcp.Ireg(2) < mbtcp.Hreg(128)) and (mvent_disablelowtemp[h])) mbtcp.Ists(14, false);
-        //if ((mbtcp.Ireg(2) > mbtcp.Hreg(127)) and (mvent_disablehightemp[h])) mbtcp.Ists(14, false);
+        if (h < 16)
+          mbtcp.Ists(13, ! (mbtcp.Hreg(111) and pow(2, h))); else mbtcp.Ists(13, ! (mbtcp.Hreg(112) and pow(2, h - 16)));
+        if (mbtcp.Ireg(2) > mbtcp.Hreg(117))
+          if (h < 16)
+              mbtcp.Ists(13, ! (mbtcp.Hreg(113) and pow(2, h))); else mbtcp.Ists(13, ! (mbtcp.Hreg(114) and pow(2, h - 16)));
+        if (mbtcp.Ireg(2) < mbtcp.Hreg(118))
+          if (h < 16)
+              mbtcp.Ists(13, ! (mbtcp.Hreg(115) and pow(2, h))); else mbtcp.Ists(13, ! (mbtcp.Hreg(116) and pow(2, h - 16)));
         // - overriding due to extreme measured parameters
         if ((mbtcp.Ireg(16)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(124)) mbtcp.Ists(14, true);
         if ((mbtcp.Ireg(18)) and (mbtcp.Ireg(2)) < mbtcp.Hreg(122)) mbtcp.Ists(14, true);
@@ -479,7 +524,8 @@ void analise()
         if (mbtcp.Ireg(1) < mbtcp.Hreg(119)) mbtcp.Ists(14, true);
         if (mbtcp.Ireg(1) > mbtcp.Hreg(120)) mbtcp.Ists(14, false);
         // - timed blocking
-        //if (mheater_disable[h]) mbtcp.Ists(15, false);
+        if (h < 16)
+          mbtcp.Ists(14, ! (mbtcp.Hreg(109) and pow(2, h))); else mbtcp.Ists(14, ! (mbtcp.Hreg(110) and pow(2, h - 16)));
       }
     }
   } else
@@ -501,22 +547,6 @@ void setoutputs()
   digitalWrite(PRT_DO_LAMP, mbtcp.Ists(12));
   digitalWrite(PRT_DO_VENT, mbtcp.Ists(13));
   digitalWrite(PRT_DO_HEAT, mbtcp.Ists(14));
-}
-
-// --- DATA RETRIEVING ---
-// blink blue LED and write to log
-uint16_t modbusquery(TRegister * reg, uint16_t val)
-{
-  blinkblueled();
-  writetosyslog(19);
-  return val;
-}
-
-// blink blue LED and write to log
-void httpquery()
-{
-  blinkblueled();
-  writetosyslog(20);
 }
 
 // --- WEBPAGES ---
@@ -550,7 +580,7 @@ void handleNotFound()
          "  </body>\n"
          "</html>\n";
   httpserver.send(404, TEXTHTML, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -743,24 +773,8 @@ void handleHelp()
           "  </body>\n"
           "</html>\n";
   httpserver.send(200, TEXTHTML, line);
-  httpquery();
-  delay(100);
-}
 
-// convert uint16_t to String in binary format
-String dec2binint(uint16_t myNum, byte NumberOfBits)
-{
-  String s;
-  if (NumberOfBits <= 16)
-  {
-    myNum = myNum << (16 - NumberOfBits);
-    for (int i = 0; i < NumberOfBits; i++)
-    {
-      if (bitRead(myNum, 15) == 1) s += "1"; else s += "0";
-      myNum = myNum << 1;
-    }
-  }
-  return s;
+  delay(100);
 }
 
 // summary page
@@ -788,11 +802,11 @@ void handleSummary()
          "    <table border=\"1\" cellpadding=\"3\" cellspacing=\"0\">\n"
          "      <tr>\n"
          "        <td>" + HR100_DESC[0] + "</td>\n"
-         "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(100), 3) + "</td>\n"
+         "        <td align=\"right\">" + uint16t2bs(mbtcp.Hreg(100), 3) + "</td>\n"
          "      </tr>\n"
          "      <tr>\n"
          "        <td>hyphae - " + HR100_DESC[1] + "</td>\n"
-         "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(101), 8) + dec2binint(mbtcp.Hreg(102), 16) + "</td>\n"
+         "        <td align=\"right\">" + uint16t2bs(mbtcp.Hreg(101), 8) + uint16t2bs(mbtcp.Hreg(102), 16) + "</td>\n"
          "      </tr>\n";
   for (int i = 0; i < 6; i++)
   {
@@ -812,14 +826,14 @@ void handleSummary()
   line +=
     "      <tr>\n"
     "        <td>mushroom -  " + HR100_DESC[1] + "</td>\n"
-    "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(109), 8) + dec2binint(mbtcp.Hreg(110), 16) + "</td>\n"
+    "        <td align=\"right\">" + uint16t2bs(mbtcp.Hreg(109), 8) + uint16t2bs(mbtcp.Hreg(110), 16) + "</td>\n"
     "      </tr>\n";
   for (int i = 0; i < 3; i++)
   {
     line +=
       "      <tr>\n"
       "        <td>mushroom -  " + HR100_DESC[i + 8] + "</td>\n"
-      "        <td align=\"right\">" + dec2binint(mbtcp.Hreg(i + 111), 8) + dec2binint(mbtcp.Hreg(2 * i + 112), 16) + "</td>\n"
+      "        <td align=\"right\">" + uint16t2bs(mbtcp.Hreg(i + 111), 8) + uint16t2bs(mbtcp.Hreg(2 * i + 112), 16) + "</td>\n"
       "      </tr>\n";
   }
   for (int i = 0; i < 2; i++)
@@ -857,7 +871,11 @@ void handleSummary()
     "    </table>\n"
     "    <br>\n"
     "    <h3>All measured values and status</h3>\n"
-    "    <table border=\"1\" cellpadding=\"3\" cellspacing=\"0\">\n";
+    "    <table border=\"1\" cellpadding=\"3\" cellspacing=\"0\">\n"
+    "      <tr>\n"
+    "        <td>system time</td>\n"
+    "        <td align=\"right\">" + timeClient.getFormattedTime() + "</td>\n"
+    "      </tr>\n";
   for (int i = 0; i < 3; i++)
   {
     s = IR_DESC[i];
@@ -893,7 +911,7 @@ void handleSummary()
     "  </body>\n"
     "</html>\n";
   httpserver.send(200, TEXTHTML, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -931,7 +949,7 @@ void handleLog()
     "  </body>\n"
     "</html>\n";
   httpserver.send(200, TEXTHTML, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -952,7 +970,7 @@ void handleGetCSV()
   for (int i = 0; i < 22; i++)
     line += "\"" + DI_NAME[i] + "\",\"" + String(mbtcp.Ists(i)) + "\"\n";
   httpserver.send(200, TEXTPLAIN, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -1001,7 +1019,7 @@ void handleGetJSON()
     "  }\n"
     "}\n";
   httpserver.send(200, TEXTPLAIN, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -1022,7 +1040,7 @@ void handleGetTXT()
   for (int i = 0; i < 22; i++)
     line += String(mbtcp.Ists(i)) + "\n";
   httpserver.send(200, TEXTPLAIN, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -1061,7 +1079,7 @@ void handleGetXML()
     "  </data>\n"
     " </xml> ";
   httpserver.send(200, TEXTPLAIN, line);
-  httpquery();
+
   delay(100);
 }
 
@@ -1149,12 +1167,6 @@ void setup(void)
   mbtcp.addIreg(0, 0, 3);
   mbtcp.addHreg(0, 0, 28);
   mbtcp.addHreg(100, 0, 29);
-  // set Modbus callback
-  //mbtcp.onGetIsts(0, modbusquery, 1);
-  //mbtcp.onGetIreg(0, modbusquery, 1);
-  //mbtcp.onGetHreg(0, modbusquery, 1);
-  //mbtcp.onGetHreg(100, modbusquery, 1);
-  // fill Modbus holding registers
   fillholdingregisters();
   // start webserver
   writetosyslog(17);
@@ -1194,7 +1206,5 @@ void loop(void)
     setoutputs();
   }
   mbtcp.task();
-  delay(10);
-  mbrtu.task();
   yield();
 }
