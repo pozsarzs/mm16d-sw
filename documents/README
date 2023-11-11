@@ -7,12 +7,9 @@ Operating program for MM16D device
   It is a stand-alone grow house control device. It takes the environmental data
 from the MM17D connected to it via the serial port using Modbus/RTU protocol.
 Default serial port parameters for serial console and Modbus/RTU connection: 9600
-bps, 8N1. It uploads the received data and the status data of the device to a
-remote database, and also retrieves the settings affecting its operation from
-there. If this database is not available, it works with the last or a general
-setting (if it is after switching on), then the logging is paused.
-  It has a web interface. All data can be queried via WLAN using HTTP in four
-formats (CSV, JSON, TXT and XML) and using Modbus/TCP.
+bps, 8N1. It has a web interface. All data can be queried via WLAN using HTTP in four
+formats (CSV, JSON, TXT and XML) and using Modbus/TCP. Device settings can be changed
+via Modbus/TCP only.
 
 Requirements:
   Hardware: ESP8266 Huzzah Feather microcontroller
